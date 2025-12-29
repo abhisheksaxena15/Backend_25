@@ -1,17 +1,18 @@
-import mongoose from 'mongoose';
-import {DB_NAME} from './constants.js';
+// require('dotenv').config({ path : './env'});
+import dotenv from "dotenv";
+// import mongoose from 'mongoose';
+// import {DB_NAME} from './constants.js';
+import connectDB from './db/index.js';
 
+dotenv.config({ 
+    path : './env'
+});
 
-
-
-
-
-
+connectDB()
 
 
 
 /*
-
 1st approach to connect to the database and start the server using iife 
 2nd is creating a separate function in seperate db file and to connect to the database and then calling that function before starting the server
 
