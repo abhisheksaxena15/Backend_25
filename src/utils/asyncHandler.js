@@ -1,0 +1,29 @@
+const x = (requestHandler) =>{
+    async (req, res, next) => {
+     Promise
+     .resolve(requestHandler(req, res, next))
+     .catch((err)=> next(err))
+    }
+}
+
+//a wrapper funciton which will be ued to wrap each controller function
+// will be used everywehere further 
+
+
+// I
+// m
+// p
+// t
+
+
+/*
+const asyncHandler = (fn) => async (req, res, next) => {
+    try {
+
+    } catch (error) {
+        res.status(err.code || 500).json({
+            success: false,
+            message: err.message || " Internal Server Error "
+        })
+    }
+}*/
