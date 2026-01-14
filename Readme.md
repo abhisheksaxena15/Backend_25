@@ -1,4 +1,4 @@
-## Chai aru backend series
+backend series
 
-this is a video series on chai and backend with javascript 
+this is a video series on backend with javascript 
 -[models Link] ()
