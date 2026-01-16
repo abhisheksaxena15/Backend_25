@@ -1,5 +1,5 @@
-const x = (requestHandler) =>{
-    async (req, res, next) => {
+const asyncHandler = (requestHandler) => {
+     return  (req, res, next) => {
      Promise
      .resolve(requestHandler(req, res, next))
      .catch((err)=> next(err))
@@ -51,7 +51,7 @@ const asyncHandler = (fn) => async (req, res, next) => {
 
 
 //important 
-
+/*
 ✅ HOW asyncHandler FIXES THIS
 app.get(
   "/users",
