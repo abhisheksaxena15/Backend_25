@@ -1,6 +1,6 @@
 import asyncHandler from '../utils/asyncHandler.js';
 import ApiError from '../utils/ApiError.js';
-import User from '../models/user.model.js';
+import {User} from '../models/user.model.js';
 import {uploadOnCloudinary } from '../utils/cloudinary.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 
@@ -93,6 +93,11 @@ const registerUser = asyncHandler(async (req, res) => {
     const coverImage = await uploadOnCloudinary(coverImageLocalPath);
     console.log("coverImage upload response --> ", coverImage);
 
+    /*
+    ✔ Moves files from local server → cloud
+    ✔ Gets public URLs
+    ✔ Removes dependency on local storage
+     */
     if( !avatar?.url ) {
         throw new ApiError("Error uploading avatar image", 400);
 
@@ -113,7 +118,7 @@ const registerUser = asyncHandler(async (req, res) => {
     })
     console.log("Newly created user --> ", user);
 
-    //to check wheter user is created or not
+    //to check wheater user is created or not
     const createdUser = await User.findById(user._id).select(
         '-password -refreshToken'
     ); // exclude password from the response - pass not required
