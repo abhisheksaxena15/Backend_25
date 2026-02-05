@@ -81,7 +81,16 @@ const registerUser = asyncHandler(async (req, res) => {
     // LOCALPATH ?? BECZ it is on server only not on cloudinary
     const avatarLocalPath = req.files?.avatar?.[0]?.path // [0] -  will get its first property coz in that there from multer we get object and if not we will get path 
     // will get path which is uploaded byjj multer 
-    const coverImageLocalPath = req.files?.coverImage?.[0]?.path
+    //const coverImageLocalPath = req.files?.coverImage?.[0]?.path
+
+    
+    
+    // dhekcing wheather cover image is present or not locally
+    let coverImageLocalPath; 
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+        coverImageLocalPath = req.files.coverImage[0].path;
+    }
+
 
     if (!avatarLocalPath) {
         throw new ApiError("Avatar file is required", 400);
@@ -126,6 +135,7 @@ const registerUser = asyncHandler(async (req, res) => {
     if(!createdUser) {
         throw new ApiError("SSomething went wrong while registering a user", 500);
     }
+    
 
 
     //if user is created perfectly and properly --- send response

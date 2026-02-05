@@ -17,6 +17,8 @@ connectDB()
     app.listen( process.env.PORT || 8000 , ()=>{
         console.log( ` Server is running on port ${ process.env.PORT || 8000 } ` );  
     })
+    console.log("DB URL =", process.env.MONGODB_URI);
+
     // on - responsible for events occuring , like port busy , server dwon, derver failure. !!
     app.on( " error " , (error)=>{
             console.error( " MongoDB connection error: " , error);
