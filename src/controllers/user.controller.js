@@ -47,6 +47,35 @@ DB + response
  */
 //asyncHandler wrapper function - is a function that accepts other function and handles error so we dont have to use try catch in every controller and promise rejections are handled
 
+
+// generate access token and refresh token - we can generate them in controller but it is better to generate them in model because if we want to use them in other places like in middleware for authentication then we can easily use them without writing the same code again and again so it is better to keep them in model as instance methods and we can call them on user instance
+const generateAccessAndRefreshTokens = async (userId) => {
+    try{
+        const user = await User.findById(userId).then((user) => {
+            return {
+                accessToken: user.generateAccessToken(),
+                refreshToken: user.generateRefreshToken()
+            }
+        })
+        return user;
+
+        user.refreshToken = refreshToken;
+        await user.save({
+            validateBeforeSave: false
+        });
+
+        return {
+            accessToken,
+            refreshToken
+        }
+
+    }
+    catch(error) {
+        console.error("Error generating tokens --> ", error);
+        throw new ApiError("Error generating refesh and access tokens", 500);
+    }
+}
+
 const registerUser = asyncHandler(async (req, res) => {
     // Registration logic hereeee
 
@@ -148,4 +177,89 @@ const registerUser = asyncHandler(async (req, res) => {
     )
 });
 
-export { registerUser };
+const loginUser = asyncHandler(async (req, res) => {
+    // req.body -data
+    // user name or email 
+    // password
+    // find user in db with email or username
+    // password check
+    // access token and refresh token generate to user
+    // send them in cookie 
+
+
+
+    // req.body -data
+    const  { username , email , password} = req.body;
+
+     if (!email || !username) {
+        throw new ApiError("Email or username is required", 400);
+    }
+    
+    const user = await User.findOne({
+        $or: [{ email }, { username }]   // either email or username can be used to login , there looking for any one of them
+    })
+
+    if( !user){
+        throw new ApiError("User not found", 404);
+    }
+
+    const isPasswordValid = await user.isPasswordCorrect(password);
+
+    if(!isPasswordValid) {
+        throw new ApiError("Invalid user credentials/password", 401);
+    }
+
+    // generate access token and refresh token
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id)
+    const loggedInUser = await User.findById(user._id).select(
+        '-password -refreshToken'
+    );
+
+    // cookies are used to store refresh token in browser and access token is sent in response body and stored in frontend (local storage or memory) and sent with each request in headers for authentication and authorization
+    const option = {
+        httpOnly: true, // only accessible by the server
+        secure : true, // only sent over https
+
+    }
+    return res
+    .status(200)
+    .cookie("accessToken", accessToken, option)
+    .cookie("refreshToken", refreshToken, option)
+    .json(
+        new ApiResponse(200, { user: loggedInUser, accessToken }, "User logged in successfully") // {} <- this is datahere
+        // we are sending access token in response body also because we need to store it in frontend and send it with each request for authentication and authorization and refresh token is stored in cookie and sent with each request automatically by the browser 
+     )  
+})
+
+
+// logout user - we will clear the cookie and remove refresh token from db
+const logoutUser = asyncHandler(async (req, res) => {
+    // find user by id and update refresh token to null
+    await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $unset: {
+                refreshToken: 1 // this removes the field from document
+            }
+        },
+        {
+            new: true // return updated document
+        }
+    )
+
+    const options = {
+        httpOnly: true,
+        secure : true, // only sent over https
+    }
+
+    return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, {}, "User logged out successfully"))
+})
+
+export { 
+    registerUser,
+    loginUser
+};
