@@ -217,8 +217,8 @@ const loginUser = asyncHandler(async (req, res) => {
 
     // cookies are used to store refresh token in browser and access token is sent in response body and stored in frontend (local storage or memory) and sent with each request in headers for authentication and authorization
     const option = {
-        httpOnly: true, // only accessible by the server
-        secure : true, // only sent over https
+        httpOnly: true, // When I put tokens into cookies, I want to control how the browser treats those cookies - no javascript access
+        secure : true, // Only send this cookie over HTTPS connections No encryption? No cookie..
 
     }
     return res
