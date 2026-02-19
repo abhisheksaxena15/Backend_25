@@ -1,5 +1,6 @@
 import mongoose,  {Schema} from 'mongoose';
 import bcrypt from 'bcryptjs';
+console.log("ACCESS SECRET =", process.env.ACCESS_TOKEN_SECRET);
 
 /**
  * Because HTTP is stateless → server does NOT remember who you are between requests.
@@ -90,4 +91,5 @@ userSchema.methods.generateRefreshToken = async function () {
         }
     )
 }
+
 export const User = mongoose.model('User' , userSchema)

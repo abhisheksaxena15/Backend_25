@@ -51,13 +51,18 @@ DB + response
 // generate access token and refresh token - we can generate them in controller but it is better to generate them in model because if we want to use them in other places like in middleware for authentication then we can easily use them without writing the same code again and again so it is better to keep them in model as instance methods and we can call them on user instance
 const generateAccessAndRefreshTokens = async (userId) => {
     try{
-        const user = await User.findById(userId).then((user) => {
-            return {
-                accessToken: user.generateAccessToken(),
-                refreshToken: user.generateRefreshToken()
-            }
-        })
-        return user;
+        console.log("Finding user with ID:", userId);
+        const user = await User.findById(userId)
+        console.log("User found:", user ? "Yes" : "No");
+        
+        // console.log("ACCESS_TOKEN_SECRET:", process.env.ACCESS_TOKEN_SECRET);
+        // console.log("REFRESH_TOKEN_SECRET:", process.env.REFRESH_TOKEN_SECRET);
+        
+      const accessToken = await user.generateAccessToken()
+const refreshToken = await user.generateRefreshToken()
+
+        // console.log("Generated accessToken (raw):", accessToken);
+        // console.log("Generated refreshToken (raw):", refreshToken);
 
         user.refreshToken = refreshToken;
         await user.save({
@@ -191,7 +196,7 @@ const loginUser = asyncHandler(async (req, res) => {
     // req.body -data
     const  { username , email , password} = req.body;
 
-     if (!email || !username) {
+     if (!email && !username) {
         throw new ApiError("Email or username is required", 400);
     }
     
@@ -210,7 +215,10 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 
     // generate access token and refresh token
+    console.log("Generating tokens for user ID:", user._id);
     const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id)
+    // console.log("Generated accessToken:", accessToken);
+    // console.log("Generated refreshToken:", refreshToken);
     const loggedInUser = await User.findById(user._id).select(
         '-password -refreshToken'
     );
@@ -218,7 +226,9 @@ const loginUser = asyncHandler(async (req, res) => {
     // cookies are used to store refresh token in browser and access token is sent in response body and stored in frontend (local storage or memory) and sent with each request in headers for authentication and authorization
     const option = {
         httpOnly: true, // When I put tokens into cookies, I want to control how the browser treats those cookies - no javascript access
-        secure : true, // Only send this cookie over HTTPS connections No encryption? No cookie..
+        secure : false, // Only send this cookie over HTTPS connections No encryption? No cookie..
+SameSite: "lax",
+ path: "/"   // ⭐ MUST MATCH
 
     }
     return res
@@ -235,6 +245,7 @@ const loginUser = asyncHandler(async (req, res) => {
 // logout user - we will clear the cookie and remove refresh token from db
 const logoutUser = asyncHandler(async (req, res) => {
     // find user by id and update refresh token to null
+    
     await User.findByIdAndUpdate(
         req.user._id,
         {
@@ -248,8 +259,12 @@ const logoutUser = asyncHandler(async (req, res) => {
     )
 
     const options = {
-        httpOnly: true,
-        secure : true, // only sent over https
+        httpOnly: true, // When I put tokens into cookies, I want to control how the browser treats those cookies - no javascript access
+        secure : false, // Only send this cookie over HTTPS connections No encryption? No cookie..
+SameSite: "lax",
+ path: "/"   // ⭐ MUST MATCH
+  //   secure: process.env.NODE_ENV === "production",
+
     }
 
     return res
@@ -261,5 +276,6 @@ const logoutUser = asyncHandler(async (req, res) => {
 
 export { 
     registerUser,
-    loginUser
+    loginUser,
+    logoutUser
 };
