@@ -303,7 +303,7 @@ const refreshAaccessToken = asyncHandler(async (req, res) => {
             secure : false, // Only send this cookie over HTTPS connections No encryption? No cookie..
     SameSite: "lax",    
         }
-        const { accessToken, newRefreshToken } = await generateAccessAndRefreshTokens(user._id);
+        const { accessToken, refreshToken: newRefreshToken } = await generateAccessAndRefreshTokens(user._id);
         return res
         .status(200)
         .cookie("refreshToken", newRefreshToken, options)
@@ -315,6 +315,8 @@ const refreshAaccessToken = asyncHandler(async (req, res) => {
     }
 
 })
+
+
 
 
 export { 
