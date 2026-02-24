@@ -1,7 +1,7 @@
 import asyncHandler from '../utils/asyncHandler.js';
 import ApiError from '../utils/ApiError.js';
-import {User} from '../models/user.model.js';
-import {uploadOnCloudinary } from '../utils/cloudinary.js';
+import { User } from '../models/user.model.js';
+import { uploadOnCloudinary } from '../utils/cloudinary.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import jwt from 'jsonwebtoken';
 /**
@@ -50,16 +50,16 @@ DB + response
 
 // generate access token and refresh token - we can generate them in controller but it is better to generate them in model because if we want to use them in other places like in middleware for authentication then we can easily use them without writing the same code again and again so it is better to keep them in model as instance methods and we can call them on user instance
 const generateAccessAndRefreshTokens = async (userId) => {
-    try{
+    try {
         console.log("Finding user with ID:", userId);
         const user = await User.findById(userId)
         console.log("User found:", user ? "Yes" : "No");
-        
+
         // console.log("ACCESS_TOKEN_SECRET:", process.env.ACCESS_TOKEN_SECRET);
         // console.log("REFRESH_TOKEN_SECRET:", process.env.REFRESH_TOKEN_SECRET);
-        
-      const accessToken = await user.generateAccessToken()
-const refreshToken = await user.generateRefreshToken()
+
+        const accessToken = await user.generateAccessToken()
+        const refreshToken = await user.generateRefreshToken()
 
         // console.log("Generated accessToken (raw):", accessToken);
         // console.log("Generated refreshToken (raw):", refreshToken);
@@ -75,7 +75,7 @@ const refreshToken = await user.generateRefreshToken()
         }
 
     }
-    catch(error) {
+    catch (error) {
         console.error("Error generating tokens --> ", error);
         throw new ApiError("Error generating refesh and access tokens", 500);
     }
@@ -100,8 +100,8 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     // check if user already exists that matches with email or username
-    const existedUser = await User.findOne({ 
-        $or: [{ email }, { username }] 
+    const existedUser = await User.findOne({
+        $or: [{ email }, { username }]
     })
     console.log("existedUser --> ", existedUser);
     if (existedUser) {
@@ -117,11 +117,11 @@ const registerUser = asyncHandler(async (req, res) => {
     // will get path which is uploaded byjj multer 
     //const coverImageLocalPath = req.files?.coverImage?.[0]?.path
 
-    
-    
+
+
     // dhekcing wheather cover image is present or not locally
-    let coverImageLocalPath; 
-    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+    let coverImageLocalPath;
+    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
         coverImageLocalPath = req.files.coverImage[0].path;
     }
 
@@ -141,22 +141,22 @@ const registerUser = asyncHandler(async (req, res) => {
     ✔ Gets public URLs
     ✔ Removes dependency on local storage
      */
-    if( !avatar?.url ) {
+    if (!avatar?.url) {
         throw new ApiError("Error uploading avatar image", 400);
 
     }
 
-    if(!coverImage?.url ) {
+    if (!coverImage?.url) {
         throw new ApiError("Error uploading cover image", 400);
     }
 
     // create user in db
     const user = await User.create({
         fullName,
-        avatar : avatar.url,  // need only url other wise whole object will go 
-        coverImage : coverImage?.url || "",
+        avatar: avatar.url,  // need only url other wise whole object will go 
+        coverImage: coverImage?.url || "",
         email,
-        username : username.toLowerCase(),
+        username: username.toLowerCase(),
         password
     })
     console.log("Newly created user --> ", user);
@@ -166,14 +166,14 @@ const registerUser = asyncHandler(async (req, res) => {
         '-password -refreshToken'
     ); // exclude password from the response - pass not required
 
-    if(!createdUser) {
+    if (!createdUser) {
         throw new ApiError("SSomething went wrong while registering a user", 500);
     }
-    
+
 
 
     //if user is created perfectly and properly --- send response
-    
+
 
     //return response using proper apiresponse format
     return res.status(201).json(
@@ -194,23 +194,23 @@ const loginUser = asyncHandler(async (req, res) => {
 
 
     // req.body -data
-    const  { username , email , password} = req.body;
+    const { username, email, password } = req.body;
 
-     if (!email && !username) {
+    if (!email && !username) {
         throw new ApiError("Email or username is required", 400);
     }
-    
+
     const user = await User.findOne({
         $or: [{ email }, { username }]   // either email or username can be used to login , there looking for any one of them
     })
 
-    if( !user){
+    if (!user) {
         throw new ApiError("User not found", 404);
     }
 
     const isPasswordValid = await user.isPasswordCorrect(password);
 
-    if(!isPasswordValid) {
+    if (!isPasswordValid) {
         throw new ApiError("Invalid user credentials/password", 401);
     }
 
@@ -226,26 +226,26 @@ const loginUser = asyncHandler(async (req, res) => {
     // cookies are used to store refresh token in browser and access token is sent in response body and stored in frontend (local storage or memory) and sent with each request in headers for authentication and authorization
     const option = {
         httpOnly: true, // When I put tokens into cookies, I want to control how the browser treats those cookies - no javascript access
-        secure : false, // Only send this cookie over HTTPS connections No encryption? No cookie..
-SameSite: "lax",
- path: "/"   // ⭐ MUST MATCH
+        secure: false, // Only send this cookie over HTTPS connections No encryption? No cookie..
+        SameSite: "lax",
+        path: "/"   // ⭐ MUST MATCH
 
     }
     return res
-    .status(200)
-    .cookie("accessToken", accessToken, option)
-    .cookie("refreshToken", refreshToken, option)
-    .json(
-        new ApiResponse(200, { user: loggedInUser, accessToken }, "User logged in successfully") // {} <- this is datahere
-        // we are sending access token in response body also because we need to store it in frontend and send it with each request for authentication and authorization and refresh token is stored in cookie and sent with each request automatically by the browser 
-     )  
+        .status(200)
+        .cookie("accessToken", accessToken, option)
+        .cookie("refreshToken", refreshToken, option)
+        .json(
+            new ApiResponse(200, { user: loggedInUser, accessToken }, "User logged in successfully") // {} <- this is datahere
+            // we are sending access token in response body also because we need to store it in frontend and send it with each request for authentication and authorization and refresh token is stored in cookie and sent with each request automatically by the browser 
+        )
 })
 
 
 // logout user - we will clear the cookie and remove refresh token from db
 const logoutUser = asyncHandler(async (req, res) => {
     // find user by id and update refresh token to null
-    
+
     await User.findByIdAndUpdate(
         req.user._id,
         {
@@ -260,18 +260,18 @@ const logoutUser = asyncHandler(async (req, res) => {
 
     const options = {
         httpOnly: true, // When I put tokens into cookies, I want to control how the browser treats those cookies - no javascript access
-        secure : false, // Only send this cookie over HTTPS connections No encryption? No cookie..
-SameSite: "lax",
- path: "/"   // ⭐ MUST MATCH
-  //   secure: process.env.NODE_ENV === "production",
+        secure: false, // Only send this cookie over HTTPS connections No encryption? No cookie..
+        SameSite: "lax",
+        path: "/"   // ⭐ MUST MATCH
+        //   secure: process.env.NODE_ENV === "production",
 
     }
 
     return res
-    .status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
-    .json(new ApiResponse(200, {}, "User logged out successfully"))
+        .status(200)
+        .clearCookie("accessToken", options)
+        .clearCookie("refreshToken", options)
+        .json(new ApiResponse(200, {}, "User logged out successfully"))
 })
 
 
@@ -285,43 +285,176 @@ const refreshAaccessToken = asyncHandler(async (req, res) => {
     if (!incommingRefreshToken) {
         throw new ApiError("Refresh token is required", 400);
     }
-    
+
     try {
         const decodedToken = jwt.verify(incommingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
         const user = await User.findById(decodedToken?._id);
-    
-        if (!user ) {
+
+        if (!user) {
             throw new ApiError("Invalid refresh token", 401);
         }
-    
+
         if (user.refreshToken !== incommingRefreshToken) {
             throw new ApiError("Refresh token is invalid or expired", 401);
         }
-    
+
         const options = {
             httpOnly: true, // When I put tokens into cookies, I want to control how the browser treats those cookies - no javascript access
-            secure : false, // Only send this cookie over HTTPS connections No encryption? No cookie..
-    SameSite: "lax",    
+            secure: false, // Only send this cookie over HTTPS connections No encryption? No cookie..
+            SameSite: "lax",
         }
         const { accessToken, refreshToken: newRefreshToken } = await generateAccessAndRefreshTokens(user._id);
         return res
-        .status(200)
-        .cookie("refreshToken", newRefreshToken, options)
-        .json(
-            new ApiResponse(200, { accessToken, newRefreshToken }, "Access token refreshed successfully")
-        )
+            .status(200)
+            .cookie("refreshToken", newRefreshToken, options)
+            .json(
+                new ApiResponse(200, { accessToken, newRefreshToken }, "Access token refreshed successfully")
+            )
     } catch (error) {
-        throw new ApiError(error?.message ||"Failed to refresh access token", 401);
+        throw new ApiError(error?.message || "Failed to refresh access token", 401);
     }
 
 })
 
 
+// get old password and new password from req.body
+// check if old password is correct or not
+// if it is correct then update new password in db and send response
+
+const changePassword = asyncHandler(async (req, res) => {
+    const { oldPassword, newPassword } = req.body;
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+        throw new ApiError("User not found", 404);
+    }
+
+    const isOldPasswordValid = await user.isPasswordCorrect(oldPassword);
+
+    if (!isOldPasswordValid) {
+        throw new ApiError("Old password is incorrect", 401);
+    }
+
+    user.password = newPassword;
+    await user.save({ validateBeforeSave: false });
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, {}, "Password changed successfully"));
+})
 
 
-export { 
+
+//get current user
+const getCurrentUser = asyncHandler(async (req, res) => {
+    return res
+        .status(200)
+        .json(new ApiResponse(200, { user: req.user }, "Current user fetched successfully"))
+
+})
+
+
+const updateaccountdetails = asyncHandler(async (req, res) => {
+    const { fullName, email } = req.body;
+
+    if (!fullName || !email) {
+        throw new ApiError("Full name and email are required", 400);
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                fullName: fullName,
+                email: email
+            }
+        },
+        {
+            new: true,
+        }
+
+    ).select("-password");
+    return res
+        .status(200)
+        .json(new ApiResponse(200, { user }, "Account details updated successfully")        );
+
+})
+
+
+const updateUserAvatar = asyncHandler(async(req , res)=>{
+    // get new avatar from req.file
+    // upload it to cloudinary
+    // get url and update in db
+    // send response
+
+    const avatarlocalPath = req.file?.path;
+    if(!avatarlocalPath) {
+        throw new ApiError("Avatar file is required", 400);
+    }
+    const avatar = await uploadOnCloudinary(avatarlocalPath);
+    if(!avatar?.url) {
+        throw new ApiError("Error uploading avatar image", 400);
+    }
+    const user = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                avatar: avatar.url
+            }
+        },
+        {
+            new: true,
+        }
+
+    ).select("-password");
+    return res
+
+        .status(200)
+        .json(new ApiResponse(200, { user }, "User avatar updated successfully")        );      
+
+});
+
+const updateUsercoverImage = asyncHandler(async(req , res)=>{
+    // get new avatar from req.file
+    // upload it to cloudinary
+    // get url and update in db
+    // send response
+
+    const coverImagelocalPath = req.file?.path;
+    if(!coverImagelocalPath) {
+        throw new ApiError("coverImage file is required", 400);
+    }
+    const coverImage = await uploadOnCloudinary(coverImagelocalPath);
+    if(!coverImage?.url) {
+        throw new ApiError("Error uploading coverImage image", 400);
+    }
+    const user = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                coverImage: coverImage.url
+            }
+        },
+        {
+            new: true,
+        }
+
+    ).select("-password");
+    return res
+
+        .status(200)
+        .json(new ApiResponse(200, { user }, "User coverImage updated successfully")        );      
+
+});
+export {
     registerUser,
     loginUser,
     logoutUser,
-    refreshAaccessToken
+    refreshAaccessToken,
+    changePassword,
+    getCurrentUser,
+    updateaccountdetails,
+    updateUserAvatar,
+    updateUsercoverImage
 };
