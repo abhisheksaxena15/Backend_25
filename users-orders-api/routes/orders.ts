@@ -47,7 +47,7 @@ router.get("/users/:id/orders/:orderId",
 router.post(
     "/users/:id/orders",
     (req: Request, res: Response): void => {
-        const userId: number = Number(req.params.params);
+        const userId: number = Number(req.params.id);
 
         if (isNaN(userId)) {
             res.status(404).json({
@@ -74,5 +74,37 @@ router.post(
     }
 );
 
+router.put(
+    "/users/:id/orders/:orderid",
+    (req: Request, res: Response): void => {
+        const userId = Number(req.params.id);
+        const orderId = Number(req.params.orderId);
+
+        if (isNaN(userId) || isNaN(orderId)) {
+            res.status(404).json({
+                message: "User id or order id required"
+            })
+        }
+
+        const order = orders.find(order =>
+            order.userId === userId &&
+            order.orderId === orderId
+        );
+
+        if (!order) {
+            res.status(404).json({
+                message: "Order not found"
+            });
+        }
+
+        order.status = req.body.status
+
+        res.status(200).json({
+            message: "Order Updated",
+            order
+        });
+
+    }
+);
 
 export default router;
