@@ -61,3 +61,50 @@ export async function findUserOrders(
         orders: result.rows as Order[]
     };
 }
+
+export async function findSingleOrder(
+    userId: number,
+    orderId: number
+): Promise<Order | null> {
+
+    const result = await pool.query(
+        `SELECT
+            order_id AS "orderId",
+            user_id AS "userId",
+            item,
+            amount,
+            status,
+            created_at AS "createdAt"
+         FROM orders
+         WHERE user_id = $1
+         AND order_id = $2`,
+        [userId, orderId]
+    );
+
+    return result.rows[0] ?? null;
+}
+
+export async function insertOrder(
+    userId: number,
+    item: string,
+    amount: number,
+    status: string
+): Promise<Order> {
+
+    const result = await pool.query(
+        `INSERT INTO orders
+            (user_id, item, amount, status)
+         VALUES
+            ($1, $2, $3, $4)
+         RETURNING
+            order_id AS "orderId",
+            user_id AS "userId",
+            item,
+            amount,
+            status,
+            created_at AS "createdAt"`,
+        [userId, item, amount, status]
+    );
+
+    return result.rows[0];
+}

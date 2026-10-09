@@ -1,5 +1,7 @@
 import type { Request, Response } from "express";
-import { findUserOrders } from "../services/orders";
+import { findUserOrders, findSingleOrder } from "../services/orders";
+import { request } from "node:http";
+import { promiseHooks } from "node:v8";
 
 export async function getUserOrders(req: Request, res: Response): Promise<void> {
     const userId = Number(req.params.id);
@@ -27,5 +29,47 @@ export async function getUserOrders(req: Request, res: Response): Promise<void> 
     res.status(200).json({
         message: "Order view successfully",
         data: result
+    });
+}
+
+
+
+export async function getSingleOrder(
+    req: Request,
+    res: Response
+): Promise<void> {
+
+    // 1. Get IDs from URL
+    const userId = Number(req.params.id);
+    const orderId = Number(req.params.orderId);
+
+    // 2. Validate IDs
+    if (
+        !Number.isInteger(userId) ||
+        !Number.isInteger(orderId) ||
+        userId <= 0 ||
+        orderId <= 0
+    ) {
+        res.status(400).json({
+            message: "Invalid user ID or order ID"
+        });
+        return;
+    }
+
+    // 3. Fetch order from service/database
+    const order = await findSingleOrder(userId, orderId);
+
+    // 4. Check whether order exists
+    if (!order) {
+        res.status(404).json({
+            message: "Order not found"
+        });
+        return;
+    }
+
+    // 5. Send successful response
+    res.status(200).json({
+        message: "Order view success",
+        data: order
     });
 }
